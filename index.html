@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071321">
+<title>DZ Coin</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Tahoma,sans-serif;background:#06101d;color:#fff}
+body{display:flex;justify-content:center}
+.app{width:100%;max-width:620px;min-height:100%;padding:14px;position:relative;
+background:radial-gradient(circle at 50% 20%,#10335b 0,#071321 45%,#030912 100%)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+background:linear-gradient(145deg,#ffd84d,#c88900);color:#08111d;font-weight:900;font-size:18px;
+border:3px solid #fff2a8;box-shadow:0 0 20px #d99b21}
+h1{font-size:23px;margin:0}.muted{opacity:.72;font-size:12px}
+.balance{margin-top:14px;padding:15px;border-radius:18px;background:rgba(13,39,67,.82);
+border:1px solid #1f6ca6;box-shadow:0 10px 30px #0006;text-align:center}
+.balance .num{font-size:35px;font-weight:900;color:#ffd54a;margin-top:4px}
+.coin-area{height:48vh;min-height:290px;display:grid;place-items:center;position:relative}
+.coin{width:min(52vw,220px);height:min(52vw,220px);border-radius:50%;border:10px solid #fff0a0;
+background:radial-gradient(circle at 35% 28%,#fff4a6 0,#f4bd20 30%,#d28a00 58%,#7c4a00 100%);
+box-shadow:0 0 35px #ffcb38aa, inset 0 0 30px #fff7b0aa;display:grid;place-items:center;
+font-size:62px;font-weight:900;color:#18100a;user-select:none;touch-action:manipulation;
+transition:transform .06s}
+.coin:active{transform:scale(.94)}
+.plus{position:absolute;font-size:25px;font-weight:900;color:#ffe66b;pointer-events:none;
+animation:up .7s ease-out forwards}
+@keyframes up{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-90px)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{padding:11px 5px;text-align:center;border-radius:14px;background:#0c2239;border:1px solid #174d76}
+.stat b{display:block;font-size:17px}.stat span{font-size:11px;opacity:.65}
+.buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
+button{border:0;border-radius:13px;padding:13px 7px;font-weight:800;color:#fff;background:#0e4e83;
+border:1px solid #277eb8;font-size:12px}
+button.primary{background:linear-gradient(135deg,#1689e8,#0759a3)}
+button.gold{background:linear-gradient(135deg,#e7b72e,#9b6300);color:#171008}
+button:active{transform:scale(.98)}
+.notice{margin-top:10px;padding:9px;border-radius:12px;text-align:center;font-size:11px;background:#071b2e;color:#bcd7ec}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">DZ</div>
+      <div><h1>DZ Coin</h1><div class="muted">اكسب • اجمع • شارك</div></div>
+    </div>
+    <div class="muted">🎮 لعبة مجانية</div>
+  </header>
+
+  <section class="balance">
+    <div class="muted">رصيد اللعبة</div>
+    <div class="num"><span id="score">0</span> DZC</div>
+  </section>
+
+  <section class="coin-area" id="area">
+    <button class="coin" id="coin" aria-label="جمع عملة">DZ</button>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><b id="today">0</b><span>اليوم</span></div>
+    <div class="stat"><b id="best">0</b><span>أفضل نتيجة</span></div>
+    <div class="stat"><b id="left">100</b><span>المتبقي</span></div>
+  </section>
+
+  <section class="buttons">
+    <button class="gold" id="daily">🎁 مكافأة يومية</button>
+    <button id="share">👥 مشاركة</button>
+    <button id="reset">↻ إعادة</button>
+  </section>
+
+  <div class="notice" id="notice">
+    كل ضغطة = +1 DZC • الحد اليومي 100 ضغطة
+  </div>
+</main>
+
+<script src="https://telegram.org/js/games.js"></script>
+<script>
+const KEY="dzcoin_local_v1";
+const DAY=()=>new Date().toISOString().slice(0,10);
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||{
+  day:DAY(), today:0, score:0, best:0, dailyClaim:false
+};
+if(state.day!==DAY()){state.day=DAY();state.today=0;state.dailyClaim=false}
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function render(){
+  $("score").textContent=state.score.toLocaleString();
+  $("today").textContent=state.today;
+  $("best").textContent=state.best;
+  $("left").textContent=Math.max(0,100-state.today);
+  $("daily").textContent=state.dailyClaim?"✅ تم أخذ اليومية":"🎁 مكافأة يومية";
+  $("daily").disabled=state.dailyClaim;
+}
+function popup(text){
+  const p=document.createElement("div");p.className="plus";p.textContent=text;
+  p.style.left=(45+Math.random()*10)+"%";p.style.top=(42+Math.random()*10)+"%";
+  $("area").appendChild(p);setTimeout(()=>p.remove(),700);
+}
+$("coin").addEventListener("click",()=>{
+  if(state.today>=100){$("notice").textContent="⏳ وصلت للحد اليومي. عد غدًا.";return}
+  state.today++;state.score++;state.best=Math.max(state.best,state.score);
+  popup("+1");save();render();
+});
+$("daily").addEventListener("click",()=>{
+  if(state.dailyClaim)return;
+  state.dailyClaim=true;state.score+=50;state.best=Math.max(state.best,state.score);
+  popup("+50");save();render();
+  $("notice").textContent="🎁 حصلت على +50 DZC للمكافأة اليومية.";
+});
+$("reset").addEventListener("click",()=>{
+  if(confirm("إعادة نتيجة اللعبة المحلية؟")){state.score=0;state.today=0;state.best=0;save();render()}
+});
+$("share").addEventListener("click",()=>{
+  try{
+    if(window.TelegramGameProxy && TelegramGameProxy.shareScore){
+      TelegramGameProxy.shareScore();
+    }else{
+      const text=encodeURIComponent("🎮 لعبت DZ Coin ووصلت إلى "+state.best+" DZC!");
+      location.href="https://t.me/share/url?url=&text="+text;
+    }
+  }catch(e){}
+});
+render();
+</script>
+</body>
+</html>
